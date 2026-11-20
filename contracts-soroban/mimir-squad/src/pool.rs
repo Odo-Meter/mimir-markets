@@ -487,6 +487,38 @@ pub fn cancel_market(env: &Env, market_id: u64) -> Result<(), Error> {
     Ok(())
 }
 
+/// Describe the refundable liabilities a cancellation of `market_id` would
+/// create, without performing it.
+///
+/// Read-only: no state is written, no tokens move, and no authority changes.
+/// The returned `ClaimResult` reports the refund owed to each side as
+/// `gross == net == pool total` and `fee == 0`, matching what `cancel_market`
+/// followed by `claim` would pay. Returns [`Error::AlreadyResolved`] if the
+/// market is settled and [`Error::MarketClosed`] once the deadline has passed,
+/// mirroring `cancel_market`'s own gating.
+pub fn preview_cancel_market(env: &Env, market_id: u64) -> Result<(ClaimResult, ClaimResult), Error> {
+    let market = storage::get_market(env, market_id)?;
+
+    if market.resolved {
+        return Err(Error::AlreadyResolved);
+    }
+    if env.ledger().timestamp() >= market.deadline {
+        return Err(Error::MarketClosed);
+    }
+
+    let refund_a = ClaimResult {
+        gross: market.pool_a,
+        fee: 0,
+        net: market.pool_a,
+    };
+    let refund_b = ClaimResult {
+        gross: market.pool_b,
+        fee: 0,
+        net: market.pool_b,
+    };
+    Ok((refund_a, refund_b))
+}
+
 pub fn claim(
     env: &Env,
     participant: Address,
