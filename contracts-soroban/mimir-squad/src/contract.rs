@@ -1,7 +1,7 @@
 //! Public contract surface. Bodies live in `pool`; this file is the single
 //! `#[contractimpl]` block plus the read-only views.
 
-use soroban_sdk::{contract, contractimpl, Address, Env, String, Vec};
+use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, String, Vec};
 
 use crate::escrow;
 use crate::pool;
@@ -235,5 +235,15 @@ impl MimirSquad {
 
     pub fn get_paused_flag(env: Env) -> bool {
         storage::is_paused(&env)
+    }
+
+    /// Versioned squad settlement manifest. Returns the digest binding the
+    /// winning side, fee policy and pool totals for `market_id`, together with
+    /// the manifest version. Liability totals are exact integer USDC.
+    pub fn get_settlement_manifest(
+        env: Env,
+        market_id: u64,
+    ) -> Result<(u32, BytesN<32>), Error> {
+        pool::settlement_manifest(&env, market_id)
     }
 }
