@@ -74,6 +74,16 @@ pub fn preview_refund_capacity(env: &Env, usdc: &Address, refundable: i128) -> i
     }
 }
 
+/// Read the escrow balance without trapping. Returns `None` when the token
+/// cannot answer a balance query, so callers can report an explicit state
+/// instead of overloading zero.
+pub fn try_balance(env: &Env, usdc: &Address) -> Option<i128> {
+    match token::TokenClient::new(env, usdc).try_balance(&env.current_contract_address()) {
+        Ok(Ok(amount)) => Some(amount),
+        _ => None,
+    }
+}
+
 /// Read-only escrow view for settlement readiness: returns the escrow balance
 /// without any state mutation, so callers can report withdrawal availability
 /// independently of resolution.
