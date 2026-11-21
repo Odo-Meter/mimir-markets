@@ -73,3 +73,10 @@ pub fn preview_refund_capacity(env: &Env, usdc: &Address, refundable: i128) -> i
         held
     }
 }
+
+/// Read-only escrow view for settlement readiness: returns the escrow balance
+/// without any state mutation, so callers can report withdrawal availability
+/// independently of resolution.
+pub fn readable_balance(env: &Env, usdc: &Address) -> i128 {
+    balance(env, usdc)
+}
