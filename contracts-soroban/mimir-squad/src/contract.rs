@@ -7,8 +7,8 @@ use crate::escrow;
 use crate::pool;
 use crate::storage;
 use crate::types::{
-    ClaimResult, Error, Market, PendingOracle, SquadLimits, MAX_BATCH_SIZE, MAX_DURATION,
-    MAX_FEE_BPS, MAX_QUESTION_BYTES, MIN_DURATION,
+    ClaimResult, Error, Market, PendingOracle, SettlementReadiness, SquadLimits, MAX_BATCH_SIZE,
+    MAX_DURATION, MAX_FEE_BPS, MAX_QUESTION_BYTES, MIN_DURATION,
 };
 
 #[contract]
@@ -245,5 +245,16 @@ impl MimirSquad {
         market_id: u64,
     ) -> Result<(u32, BytesN<32>), Error> {
         pool::settlement_manifest(&env, market_id)
+    }
+
+    /// Read-only settlement readiness for a market. Never mutates state.
+    /// `withdrawal_open` is reported independently of `resolved`, so callers can
+    /// see whether pre-deadline withdrawals remain available. Unknown markets
+    /// return `MarketNotFound` rather than a partial view.
+    pub fn get_settlement_readiness(
+        env: Env,
+        market_id: u64,
+    ) -> Result<SettlementReadiness, Error> {
+        pool::settlement_readiness(&env, market_id)
     }
 }
